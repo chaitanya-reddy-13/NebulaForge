@@ -3,7 +3,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { Client } from "@gradio/client";
 import fetch from 'node-fetch';
-import { generateModelSpec } from './proceduralGenerator';
+import { generateModelSpec } from './proceduralGenerator.js';
 
 // Polyfill fetch for Node.js environment
 if (!global.fetch) {
