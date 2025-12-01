@@ -21,3 +21,5 @@ export default defineConfig({
   }
 });
 
+
+// Config updated to trigger restart

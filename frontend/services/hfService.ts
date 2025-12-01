@@ -28,6 +28,7 @@ export const refinePrompt = async (userPrompt: string): Promise<string> => {
 
 export interface GenerateModelResponse {
   textureDataUrl?: string | null;
+  model3DUrl?: string | null;
   modelSpec: ProceduralModelSpec;
 }
 

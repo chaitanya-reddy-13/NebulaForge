@@ -7,13 +7,14 @@ import React, {
   useImperativeHandle
 } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stage, PerspectiveCamera, Grid, Environment } from '@react-three/drei';
+import { OrbitControls, Stage, PerspectiveCamera, Grid, Environment, Gltf } from '@react-three/drei';
 import * as THREE from 'three';
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { MeshDescriptor, ProceduralModelSpec } from '../types';
 
 interface ThreeViewerProps {
   textureUrl?: string;
+  modelUrl?: string;
   modelSpec?: ProceduralModelSpec | null;
   isGenerating: boolean;
 }
@@ -209,7 +210,7 @@ const ProceduralGroup: React.FC<{
 };
 
 const ThreeViewer = forwardRef<ThreeViewerHandle, ThreeViewerProps>(
-  ({ textureUrl, modelSpec, isGenerating }, ref) => {
+  ({ textureUrl, modelUrl, modelSpec, isGenerating }, ref) => {
     const groupRef = useRef<THREE.Group>(null);
     const [texture, setTexture] = useState<THREE.Texture | null>(null);
 
@@ -229,8 +230,8 @@ const ThreeViewer = forwardRef<ThreeViewerHandle, ThreeViewerProps>(
                 gltf instanceof ArrayBuffer
                   ? new Blob([gltf], { type: 'model/gltf-binary' })
                   : new Blob([JSON.stringify(gltf, null, 2)], {
-                      type: 'application/json'
-                    });
+                    type: 'application/json'
+                  });
               const link = document.createElement('a');
               link.href = URL.createObjectURL(blob);
               link.download = `nebula-forge-${Date.now()}.glb`;
@@ -292,7 +293,13 @@ const ThreeViewer = forwardRef<ThreeViewerHandle, ThreeViewerProps>(
           <PerspectiveCamera makeDefault position={[0, 2, 5]} fov={50} />
 
           <Stage intensity={0.6} environment={environmentPreset} adjustCamera={false}>
-            <ProceduralGroup spec={modelSpec} texture={texture} groupRef={groupRef} />
+            {modelUrl ? (
+              <group ref={groupRef}>
+                <Gltf src={modelUrl} castShadow receiveShadow />
+              </group>
+            ) : (
+              <ProceduralGroup spec={modelSpec} texture={texture} groupRef={groupRef} />
+            )}
           </Stage>
 
           <ambientLight intensity={0.4} />

@@ -3,13 +3,13 @@ import Layout from './components/Layout';
 import ThreeViewer, { ThreeViewerHandle } from './components/ThreeViewer';
 import { GenerationMode, ModelQuality, ProceduralModelSpec } from './types';
 import { refinePrompt, generateModelAssets } from './services/hfService';
-import { 
-  Wand2, 
-  Image as ImageIcon, 
-  Type, 
-  Upload, 
-  Download, 
-  Share2, 
+import {
+  Wand2,
+  Image as ImageIcon,
+  Type,
+  Upload,
+  Download,
+  Share2,
   Sparkles,
   RefreshCw,
   X,
@@ -24,9 +24,10 @@ const App: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [generatedTexture, setGeneratedTexture] = useState<string | undefined>(undefined);
+  const [modelUrl, setModelUrl] = useState<string | undefined>(undefined);
   const [modelSpec, setModelSpec] = useState<ProceduralModelSpec | null>(null);
   const [quality, setQuality] = useState<ModelQuality>(ModelQuality.STANDARD);
-  
+
   // File Input Ref
   const fileInputRef = useRef<HTMLInputElement>(null);
   const viewerRef = useRef<ThreeViewerHandle | null>(null);
@@ -58,14 +59,16 @@ const App: React.FC = () => {
 
   const handleGenerate = async () => {
     if (!prompt.trim() && !uploadedImage) return;
-    
+
     setIsGenerating(true);
     setGeneratedTexture(undefined); // Clear previous
+    setModelUrl(undefined);
     setModelSpec(null);
 
     try {
       const response = await generateModelAssets(prompt, uploadedImage || undefined);
       setGeneratedTexture(response.textureDataUrl ?? undefined);
+      setModelUrl(response.model3DUrl ?? undefined);
       setModelSpec(response.modelSpec);
     } catch (err) {
       console.error("Generation failed", err);
@@ -98,30 +101,28 @@ const App: React.FC = () => {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-80px)]">
-        
+
         {/* LEFT PANEL: CONTROLS */}
         <div className="lg:col-span-4 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
-          
+
           {/* Mode Switcher */}
           <div className="bg-zinc-900/50 p-1 rounded-xl flex border border-zinc-800">
             <button
               onClick={() => setMode(GenerationMode.TEXT_TO_3D)}
-              className={`flex-1 py-2.5 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-all ${
-                mode === GenerationMode.TEXT_TO_3D 
-                  ? 'bg-zinc-800 text-white shadow-sm' 
-                  : 'text-zinc-400 hover:text-zinc-200'
-              }`}
+              className={`flex-1 py-2.5 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-all ${mode === GenerationMode.TEXT_TO_3D
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200'
+                }`}
             >
               <Type className="w-4 h-4" />
               Text to 3D
             </button>
             <button
               onClick={() => setMode(GenerationMode.IMAGE_TO_3D)}
-              className={`flex-1 py-2.5 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-all ${
-                mode === GenerationMode.IMAGE_TO_3D 
-                  ? 'bg-zinc-800 text-white shadow-sm' 
-                  : 'text-zinc-400 hover:text-zinc-200'
-              }`}
+              className={`flex-1 py-2.5 text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-all ${mode === GenerationMode.IMAGE_TO_3D
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200'
+                }`}
             >
               <ImageIcon className="w-4 h-4" />
               Image to 3D
@@ -136,13 +137,13 @@ const App: React.FC = () => {
             </h2>
 
             <div className="space-y-6">
-              
+
               {/* Image Upload Area (Only for Image to 3D) */}
               {mode === GenerationMode.IMAGE_TO_3D && (
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-zinc-300">Reference Image</label>
                   {!uploadedImage ? (
-                    <div 
+                    <div
                       onClick={() => fileInputRef.current?.click()}
                       className="border-2 border-dashed border-zinc-700 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500 hover:bg-zinc-800/50 transition-all group"
                     >
@@ -157,7 +158,7 @@ const App: React.FC = () => {
                   ) : (
                     <div className="relative rounded-xl overflow-hidden border border-zinc-700 group">
                       <img src={uploadedImage} alt="Reference" className="w-full h-48 object-cover opacity-80" />
-                      <button 
+                      <button
                         onClick={clearUpload}
                         className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-sm transition-colors"
                       >
@@ -165,12 +166,12 @@ const App: React.FC = () => {
                       </button>
                     </div>
                   )}
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleFileUpload} 
-                    className="hidden" 
-                    accept="image/*" 
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    accept="image/*"
                   />
                 </div>
               )}
@@ -181,7 +182,7 @@ const App: React.FC = () => {
                   <label className="text-sm font-medium text-zinc-300">
                     {mode === GenerationMode.IMAGE_TO_3D ? 'Additional Instructions' : 'Prompt'}
                   </label>
-                  <button 
+                  <button
                     onClick={handleRefinePrompt}
                     disabled={isRefining || !prompt}
                     className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -206,11 +207,10 @@ const App: React.FC = () => {
                     <button
                       key={q}
                       onClick={() => setQuality(q)}
-                      className={`text-xs py-2 rounded-lg border transition-all ${
-                        quality === q 
-                          ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200' 
-                          : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-800'
-                      }`}
+                      className={`text-xs py-2 rounded-lg border transition-all ${quality === q
+                        ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200'
+                        : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-800'
+                        }`}
                     >
                       {q}
                     </button>
@@ -246,7 +246,7 @@ const App: React.FC = () => {
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium text-white">Preview</h3>
             <div className="flex gap-2">
-              <button 
+              <button
                 disabled={!modelSpec}
                 onClick={handleShare}
                 className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg border border-zinc-700 transition-colors disabled:opacity-50 disabled:hover:bg-zinc-800"
@@ -254,7 +254,7 @@ const App: React.FC = () => {
                 <Share2 className="w-3.5 h-3.5" />
                 Share
               </button>
-              <button 
+              <button
                 disabled={!modelSpec}
                 onClick={handleDownload}
                 className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white text-black hover:bg-zinc-200 rounded-lg transition-colors disabled:opacity-50 disabled:bg-zinc-600 disabled:text-zinc-400"
@@ -267,45 +267,48 @@ const App: React.FC = () => {
 
           {/* 3D Canvas */}
           <div className="flex-grow relative rounded-2xl overflow-hidden ring-1 ring-zinc-800 bg-zinc-900">
-             <ThreeViewer
-               ref={viewerRef}
-               textureUrl={generatedTexture}
-               modelSpec={modelSpec}
-               isGenerating={isGenerating}
-             />
-             
-             {/* Empty State */}
-             {!modelSpec && !isGenerating && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-zinc-500">
-                  <div className="w-16 h-16 bg-zinc-800/50 rounded-2xl flex items-center justify-center mb-4 border border-zinc-700/50">
-                    <Cuboid className="w-8 h-8 opacity-50" />
-                  </div>
-                  <p className="text-sm">Configure your settings and click generate</p>
+            <ThreeViewer
+              ref={viewerRef}
+              textureUrl={generatedTexture}
+              modelUrl={modelUrl}
+              modelSpec={modelSpec}
+              isGenerating={isGenerating}
+            />
+
+            {/* Empty State */}
+            {!modelSpec && !isGenerating && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-zinc-500">
+                <div className="w-16 h-16 bg-zinc-800/50 rounded-2xl flex items-center justify-center mb-4 border border-zinc-700/50">
+                  <Cuboid className="w-8 h-8 opacity-50" />
                 </div>
-             )}
+                <p className="text-sm">Configure your settings and click generate</p>
+              </div>
+            )}
           </div>
 
           {/* Asset Info Bar */}
           {modelSpec && (
-             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex justify-between items-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex gap-4">
-                  <div>
-                    <p className="text-xs text-zinc-500 uppercase tracking-wider">Seed</p>
-                    <p className="text-sm font-mono text-zinc-300">{modelSpec.seed}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-zinc-500 uppercase tracking-wider">Meshes</p>
-                    <p className="text-sm font-mono text-zinc-300">{modelSpec.meshes.length}</p>
-                  </div>
-                   <div>
-                    <p className="text-xs text-zinc-500 uppercase tracking-wider">Environment</p>
-                    <p className="text-sm font-mono text-zinc-300 capitalize">{modelSpec.environment}</p>
-                  </div>
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex justify-between items-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex gap-4">
+                <div>
+                  <p className="text-xs text-zinc-500 uppercase tracking-wider">Seed</p>
+                  <p className="text-sm font-mono text-zinc-300">{modelSpec.seed}</p>
                 </div>
-                <div className="text-xs text-zinc-500">
-                  {generatedTexture ? 'Texture + geometry ready' : 'Procedural geometry ready'}
+                <div>
+                  <p className="text-xs text-zinc-500 uppercase tracking-wider">Meshes</p>
+                  <p className="text-sm font-mono text-zinc-300">
+                    {modelUrl ? '1 (AI)' : modelSpec.meshes.length}
+                  </p>
                 </div>
-             </div>
+                <div>
+                  <p className="text-xs text-zinc-500 uppercase tracking-wider">Environment</p>
+                  <p className="text-sm font-mono text-zinc-300 capitalize">{modelSpec.environment}</p>
+                </div>
+              </div>
+              <div className="text-xs text-zinc-500">
+                {modelUrl ? 'AI Model ready' : (generatedTexture ? 'Texture + geometry ready' : 'Procedural geometry ready')}
+              </div>
+            </div>
           )}
         </div>
       </div>
