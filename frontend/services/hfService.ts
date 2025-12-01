@@ -1,8 +1,11 @@
 import { ProceduralModelSpec } from '../types';
 
+const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '');
+const buildUrl = (path: string) => `${API_BASE_URL}${path}`;
+
 export const refinePrompt = async (userPrompt: string): Promise<string> => {
   try {
-    const res = await fetch('/api/refine-prompt', {
+    const res = await fetch(buildUrl('/api/refine-prompt'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -32,7 +35,7 @@ export const generateModelAssets = async (
   prompt: string,
   referenceImageBase64?: string
 ): Promise<GenerateModelResponse> => {
-  const res = await fetch('/api/generate-model', {
+  const res = await fetch(buildUrl('/api/generate-model'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
